@@ -1,0 +1,25 @@
+# ==============================================================================
+# Build output and generated binaries
+# ==============================================================================
+build/
+bin/
+obj/
+
+# Windows executables and intermediate objects
+*.exe
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+
+# Debug symbol files
+*.pdb
+*.ilk
+*.dSYM/
+*.d
+
+# Temporary and test output files
+*.log
+*.tmp
+*.out
