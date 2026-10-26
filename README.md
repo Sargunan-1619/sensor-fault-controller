@@ -1,6 +1,25 @@
 # Embedded Sensor Monitoring & Fault Controller (Project 1)
 
+[![C Standard](https://img.shields.io/badge/C%20Standard-ISO%20C11-00599C?logo=c)](include/sensor_controller.h)
+[![WebAssembly Demo](https://img.shields.io/badge/Live%20Demo-WebAssembly%20Interactive-654FF0?logo=webassembly)](https://sensor-fault-controller.vercel.app)
+[![Unit Tests](https://img.shields.io/badge/C%20Unit%20Tests-31%20Passed-brightgreen)](tests/test_sensor_controller.c)
+[![Wasm Tests](https://img.shields.io/badge/Wasm%20Verification-31%20Passed-brightgreen)](demo/verify_wasm.js)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 A modular, safety-critical Embedded C sensor monitoring and fault controller running on Windows via MSYS2 UCRT64 GCC, designed in accordance with MISRA-C and AUTOSAR architectural principles.
+
+---
+
+## 🚀 Interactive Live WebAssembly Demo
+
+Experience the real C11 embedded controller running live in your browser compiled to freestanding WebAssembly:
+
+👉 **Live Demo:** [https://sensor-fault-controller.vercel.app](https://sensor-fault-controller.vercel.app) *(Deployment target)*  
+👉 **Source Code:** [https://github.com/Sargunan-1619/sensor-fault-controller](https://github.com/Sargunan-1619/sensor-fault-controller)  
+👉 **Demo Directory:** [`demo/`](demo/)
+
+> [!NOTE]
+> **Zero JavaScript Duplication:** The web demo runs the exact same `src/sensor_controller.c` logic compiled into a 7.4 KB freestanding `.wasm` binary. The finite state machine, threshold checks, and safety latching execute directly inside WebAssembly.
 
 ---
 
@@ -36,6 +55,18 @@ sensor_fault_controller/
 ├── .gitignore                   # Excludes build artifacts and temporary files
 ├── README.md                    # Project documentation and real execution records
 ├── build.ps1                    # Deterministic PowerShell build runner
+├── vercel.json                  # Vercel configuration routing root to demo/
+├── demo/                        # Interactive WebAssembly web demo
+│   ├── index.html               # Industrial dark-theme web dashboard
+│   ├── style.css                # Polished responsive interface styling
+│   ├── app.js                   # Wasm loader and interactive telemetry streamer
+│   ├── sensor_controller.wasm   # Compiled freestanding WebAssembly binary (7.4 KB)
+│   ├── wasm_bridge.c            # Exported WebAssembly ABI bridge functions
+│   ├── math.h                   # Freestanding math header (mapping to builtins)
+│   ├── verify_wasm.js           # Automated Node.js test runner (31 C scenarios)
+│   ├── build_wasm.ps1           # Automated PowerShell script for Wasm compilation
+│   ├── vercel.json              # Vercel config when demo/ is chosen as project root
+│   └── README.md                # Comprehensive demo documentation
 ├── include/
 │   └── sensor_controller.h      # Public API contracts, state enums, and thresholds
 ├── src/
@@ -225,7 +256,45 @@ All outputs below are captured directly from actual terminal execution on the co
 
 ---
 
-## 7. Scope & Limitations of Host-Based Simulation
+## 7. Interactive WebAssembly Demo (Local & Vercel)
+
+The [`demo/`](demo/) directory provides an interactive web application that allows recruiters and engineers to test the actual C11 sensor controller directly in the browser.
+
+### Features
+- **100% Real Embedded Logic:** Compiles `src/sensor_controller.c` to freestanding WebAssembly with $0$ bytes dynamic heap allocation and a $20$-byte static context RAM footprint.
+- **Interactive Telemetry:** Real-time temperature slider ($-50.0^\circ\text{C}$ to $170.0^\circ\text{C}$), quick-set preset buttons, and hardware fault injection switches (`DISCONNECTED`, `COMM_TIMEOUT`, `OUT_OF_BOUNDS`, `INVALID_DATA`).
+- **10 Hz Real-Time Telemetry Streamer:** Generates continuous sinusoidal thermal waves for evaluating live FSM state transitions and hysteresis latch recovery.
+- **Embedded Diagnostics Inspector:** Displays live struct memory size, total execution cycles, sample counters, and active fault codes.
+
+### Running the Web Demo Locally
+```powershell
+# From the repository root, start a local HTTP server:
+python -m http.server 8090 --directory demo
+```
+Then navigate to:
+👉 **`http://127.0.0.1:8090`**
+
+### Running the WebAssembly Verification Suite
+All 31 original C controller test scenarios are verified against the compiled `.wasm` binary:
+```powershell
+node demo/verify_wasm.js
+```
+*Result: 31 / 31 Passed (100% Pass Rate).*
+
+### Recompiling the WebAssembly Binary
+To rebuild `demo/sensor_controller.wasm` from `src/sensor_controller.c` and `demo/wasm_bridge.c`:
+```powershell
+powershell -ExecutionPolicy Bypass -File demo/build_wasm.ps1
+```
+
+### Deploying to Vercel
+This repository is configured for immediate deployment to Vercel:
+- **Repository Root Deployment:** Root [`vercel.json`](vercel.json) specifies `"outputDirectory": "demo"`, automatically serving the demo on push.
+- **Dedicated Demo Directory:** In Vercel Project Settings, you can alternatively designate `demo` as the Root Directory.
+
+---
+
+## 8. Scope & Limitations of Host-Based Simulation
 
 - **Target vs. Host Environment:** This software was compiled and executed under host-based simulation (x86_64 Windows using MSYS2 UCRT64 GCC) to enable automated desktop testing. **No physical microcontroller or hardware sensors were utilized.**
 - **Hardware Peripherals:** On a target microcontroller (e.g., STM32, ESP32, NXP), the telemetry inputs would be provided by an ADC driver ISR or an I2C/SPI temperature sensor driver (e.g., TMP117, MAX31865) rather than CLI arguments.

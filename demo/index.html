@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C11 Sensor Fault Controller — WebAssembly Interactive Demo</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <rect x="9" y="9" width="6" height="6"/>
+            <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">C11 Sensor Fault Controller</h1>
+          <p class="brand-subtitle">Freestanding WebAssembly Interactive Verification Console</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-primary">ISO C11 Standard</span>
+        <span class="badge badge-wasm">WebAssembly 7.0 KB</span>
+        <span class="badge badge-memory">RAM: 20 Bytes (0B Heap)</span>
+        <a href="https://github.com/Sargunan-1619/sensor-fault-controller" target="_blank" rel="noopener" class="btn-github">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          View C Source
+        </a>
+      </div>
+    </header>
+
+    <!-- Simulation Disclaimer Banner -->
+    <div class="simulation-banner">
+      <div class="banner-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="banner-content">
+        <strong>Hardware Simulation Disclosure:</strong> All temperature values, communication timeouts, and disconnection flags are software-simulated inputs passed directly into the compiled C11 WebAssembly module in your browser. <strong>No physical microcontroller or transducer hardware was utilized.</strong> The C controller's state machine, memory layout, thresholds, and hysteresis logic run with 100% fidelity.
+      </div>
+    </div>
+
+    <!-- Main Grid Layout -->
+    <div class="dashboard-grid">
+      <!-- Left Column: FSM Visualizer & Telemetry -->
+      <section class="card fsm-card">
+        <div class="card-header">
+          <h2 class="card-title">Finite State Machine (FSM) Engine</h2>
+          <span class="relay-indicator" id="relayStatus">RELAY: ARMED</span>
+        </div>
+
+        <!-- FSM Graph Nodes -->
+        <div class="fsm-nodes-container">
+          <div class="fsm-node active" id="nodeNormal">
+            <div class="node-indicator"></div>
+            <div class="node-label">STATE_NORMAL</div>
+            <div class="node-sub">T &lt; 60.0°C &amp; OK</div>
+          </div>
+          <div class="fsm-arrow">
+            <span class="arrow-text">≥ 60.0°C</span>
+            <span class="arrow-line">→</span>
+          </div>
+          <div class="fsm-node" id="nodeWarning">
+            <div class="node-indicator"></div>
+            <div class="node-label">STATE_WARNING</div>
+            <div class="node-sub">60°C ≤ T &lt; 80°C</div>
+          </div>
+          <div class="fsm-arrow">
+            <span class="arrow-text">≥ 80.0°C / Err</span>
+            <span class="arrow-line">→</span>
+          </div>
+          <div class="fsm-node" id="nodeFault">
+            <div class="node-indicator"></div>
+            <div class="node-label">STATE_FAULT</div>
+            <div class="node-sub">Critical / Tripped</div>
+          </div>
+        </div>
+
+        <!-- Hysteresis & Recovery Indicator -->
+        <div class="hysteresis-callout" id="hysteresisCallout">
+          <div class="hysteresis-title">
+            <span>Thermal Hysteresis Safety Watcher</span>
+            <span class="hysteresis-badge" id="hysBadge">LATCH DISARMED</span>
+          </div>
+          <p id="hysText">System operating in nominal range. Over-temperature faults (≥ 80°C) will latch safely and refuse reset until temperature drops below 75.0°C recovery threshold.</p>
+        </div>
+
+        <!-- Primary Gauge & Telemetry Readout -->
+        <div class="telemetry-readout-panel">
+          <div class="gauge-section">
+            <div class="gauge-reading">
+              <span class="gauge-temp-val" id="dispTemp">25.0</span>
+              <span class="gauge-unit">°C</span>
+            </div>
+            <div class="gauge-bar-track">
+              <div class="gauge-bar-fill" id="gaugeFill" style="width: 34.2%;"></div>
+              <div class="gauge-marker warn-marker" style="left: 52.6%;">
+                <span class="marker-label">60°C (Warn)</span>
+              </div>
+              <div class="gauge-marker fault-marker" style="left: 63.1%;">
+                <span class="marker-label">80°C (Fault)</span>
+              </div>
+              <div class="gauge-marker rec-marker" style="left: 60.5%;">
+                <span class="marker-label">75°C (Reset)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Active State</span>
+              <span class="metric-value text-normal" id="metricState">STATE_NORMAL</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Active Fault Code</span>
+              <span class="metric-value" id="metricFault">FAULT_NONE</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Driver Status Flag</span>
+              <span class="metric-value" id="metricStatus">SENSOR_OK</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Fault Counter</span>
+              <span class="metric-value" id="metricFaultCount">0</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Interactive Controls -->
+      <section class="card controls-card">
+        <div class="card-header">
+          <h2 class="card-title">Simulated Sensor Injection &amp; Controls</h2>
+          <div class="stream-toggle-group">
+            <label class="switch-label" for="autoStreamToggle">Auto-Stream (10 Hz)</label>
+            <label class="switch">
+              <input type="checkbox" id="autoStreamToggle">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Slider Control -->
+        <div class="control-group">
+          <div class="slider-header">
+            <label for="tempSlider">Simulated Temperature Input</label>
+            <div class="input-stepper">
+              <input type="number" id="tempInput" step="0.5" min="-45" max="165" value="25.0">
+              <span class="stepper-unit">°C</span>
+            </div>
+          </div>
+          <input type="range" id="tempSlider" min="-45" max="165" step="0.5" value="25.0" class="range-slider">
+          <div class="slider-bounds">
+            <span>-45°C (Under-Range)</span>
+            <span>0°C</span>
+            <span>60°C</span>
+            <span>80°C</span>
+            <span>165°C (Over-Range)</span>
+          </div>
+        </div>
+
+        <!-- Operational Presets -->
+        <div class="control-group">
+          <label class="section-label">Operational Temperature Presets</label>
+          <div class="presets-grid">
+            <button class="btn-preset" data-temp="25.0" data-status="0">
+              <span class="preset-name">Nominal Ambient</span>
+              <span class="preset-temp">25.0°C</span>
+            </button>
+            <button class="btn-preset" data-temp="59.0" data-status="0">
+              <span class="preset-name">Nominal High</span>
+              <span class="preset-temp">59.0°C</span>
+            </button>
+            <button class="btn-preset" data-temp="60.0" data-status="0">
+              <span class="preset-name">Warning Lower</span>
+              <span class="preset-temp">60.0°C</span>
+            </button>
+            <button class="btn-preset" data-temp="72.0" data-status="0">
+              <span class="preset-name">Elevated Warning</span>
+              <span class="preset-temp">72.0°C</span>
+            </button>
+            <button class="btn-preset btn-preset-danger" data-temp="80.0" data-status="0">
+              <span class="preset-name">Over-Temp Trip</span>
+              <span class="preset-temp">80.0°C</span>
+            </button>
+            <button class="btn-preset btn-preset-danger" data-temp="115.0" data-status="0">
+              <span class="preset-name">Thermal Runaway</span>
+              <span class="preset-temp">115.0°C</span>
+            </button>
+            <button class="btn-preset btn-preset-warning" data-temp="77.0" data-status="0">
+              <span class="preset-name">Hysteresis Test</span>
+              <span class="preset-temp">77.0°C</span>
+            </button>
+            <button class="btn-preset btn-preset-success" data-temp="45.0" data-status="0">
+              <span class="preset-name">Safe Recovery</span>
+              <span class="preset-temp">45.0°C</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hardware Error Injection -->
+        <div class="control-group">
+          <label class="section-label">Simulate Sensor Hardware Faults</label>
+          <div class="error-buttons-grid">
+            <button class="btn-err" id="btnErrNone" data-status="0">
+              <span class="err-tag">OK</span>
+              Normal Sensor
+            </button>
+            <button class="btn-err" id="btnErrDisc" data-status="1">
+              <span class="err-tag tag-danger">ERR</span>
+              Disconnect
+            </button>
+            <button class="btn-err" id="btnErrTimeout" data-status="2">
+              <span class="err-tag tag-warning">TIMEOUT</span>
+              Comm Timeout
+            </button>
+            <button class="btn-err" id="btnErrOOB" data-status="3">
+              <span class="err-tag tag-danger">LIMIT</span>
+              Out-of-Bounds
+            </button>
+            <button class="btn-err" id="btnErrNaN" data-status="4">
+              <span class="err-tag tag-warning">NaN</span>
+              Invalid Float
+            </button>
+          </div>
+        </div>
+
+        <!-- Reset Actions -->
+        <div class="actions-panel">
+          <button class="btn-action btn-reset" id="btnResetFault">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/>
+            </svg>
+            Clear Fault / Reset Controller
+          </button>
+          <button class="btn-action btn-secondary" id="btnReinit">
+            Re-Initialize Context
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom Diagnostics & Architecture Bar -->
+    <div class="bottom-grid">
+      <!-- C Diagnostics Console -->
+      <section class="card diagnostics-card">
+        <div class="card-header">
+          <h3 class="card-title">C Firmware Execution Diagnostics</h3>
+          <span class="log-badge" id="evalCounter">Samples: 1</span>
+        </div>
+        <div class="terminal-window" id="terminalLog">
+          <div class="log-line text-dim">[SYSTEM] WebAssembly C11 Controller Initialized (sizeof(Context) = 20 Bytes).</div>
+          <div class="log-line text-success">[00:00.00] STATE: NORMAL | TEMP: 25.00 C | FAULT: NONE | RELAY: ARMED</div>
+        </div>
+      </section>
+
+      <!-- Technical Architecture Spec Card -->
+      <section class="card spec-card">
+        <div class="card-header">
+          <h3 class="card-title">Embedded Architectural Verification</h3>
+          <span class="badge badge-primary">MISRA-C / ISO C11</span>
+        </div>
+        <div class="spec-list">
+          <div class="spec-item">
+            <span class="spec-name">Core Source Code</span>
+            <span class="spec-val">src/sensor_controller.c (100% Unmodified)</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-name">RAM Footprint</span>
+            <span class="spec-val">20 Bytes (Static Struct, 0B Heap)</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-name">Wasm Binary Size</span>
+            <span class="spec-val">7,030 Bytes (Freestanding, 0 Imports)</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-name">Execution Complexity</span>
+            <span class="spec-val">Strict O(1) Constant Evaluation</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-name">Unit Test Coverage</span>
+            <span class="spec-val text-success">31 / 31 Scenarios Verified Passing</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div>
+        <span>C11 Sensor Fault Controller Web Demo</span> &bull;
+        <span>Zero JavaScript Duplication</span> &bull;
+        <span>Static Vercel Deployment</span>
+      </div>
+      <div>
+        <a href="https://github.com/Sargunan-1619/sensor-fault-controller" target="_blank" rel="noopener">GitHub Project 1</a> &bull;
+        <a href="https://github.com/Sargunan-1619/firmware-validation-framework" target="_blank" rel="noopener">Project 2 Validation Framework</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
