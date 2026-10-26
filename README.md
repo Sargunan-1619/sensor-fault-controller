@@ -83,6 +83,62 @@ For a clean rebuild:
 .\build\test_runner.exe
 ```
 
+#### Actual Test Suite Execution Output (31/31 Passing)
+```text
+=================================================================
+  Embedded Sensor Monitoring & Fault Controller - C Unit Tests   
+=================================================================
+
+--- Test Suite 1: Normal Operating Range (< 60°C) ---
+  [PASS] TC-01: Room Temperature (25°C) -> STATE_NORMAL
+  [PASS] TC-02: Freezing Point (0°C) -> STATE_NORMAL
+  [PASS] TC-03: Sub-zero Operating (-20°C) -> STATE_NORMAL
+  [PASS] TC-04: Integer Boundary High (59°C) -> STATE_NORMAL
+  [PASS] TC-05: Strict Boundary Float (59.9°C) -> STATE_NORMAL
+
+--- Test Suite 2: Warning Range (60°C through 79°C) ---
+  [PASS] TC-06: Warning Lower Boundary (60°C) -> STATE_WARNING
+  [PASS] TC-07: Warning Mid-range (70°C) -> STATE_WARNING
+  [PASS] TC-08: Warning High Integer Boundary (79°C) -> STATE_WARNING
+  [PASS] TC-09: Warning High Float Boundary (79.9°C) -> STATE_WARNING
+
+--- Test Suite 3: Fault Over-Temperature (>= 80°C) ---
+  [PASS] TC-10: Fault Exact Boundary (80°C) -> STATE_FAULT (FAULT_OVER_TEMP)
+  [PASS] TC-11: Extreme Thermal Runaway (120°C) -> STATE_FAULT (FAULT_OVER_TEMP)
+
+--- Test Suite 4: Invalid Sensor Inputs & Fault Handling ---
+  [PASS] TC-12: Hardware Disconnection -> STATE_FAULT (FAULT_SENSOR_DISCONNECTED)
+  [PASS] TC-13: Bus Timeout / ADC Comm Error -> STATE_FAULT (FAULT_SENSOR_COMM_ERROR)
+  [PASS] TC-14: Sensor Under Physical Limit (-45°C) -> STATE_FAULT (FAULT_SENSOR_UNDER_RANGE)
+  [PASS] TC-15: Sensor Over Physical Limit (160°C) -> STATE_FAULT (FAULT_SENSOR_OVER_RANGE)
+  [PASS] TC-16: Arithmetic NaN Telemetry -> STATE_FAULT (FAULT_SENSOR_INVALID_DATA)
+  [PASS] TC-17: NULL Context Defense -> Handled safely without crash
+  [PASS] TC-18: NULL Reading Defense -> STATE_FAULT (FAULT_SENSOR_INVALID_DATA)
+
+--- Test Suite 5: State Recovery & Fault Reset ---
+  [PASS] TC-19: Initial Over-Temp Trigger -> STATE_FAULT
+  [PASS] TC-20: Clear Rejected When T >= 75°C (Hysteresis Check) -> Stays STATE_FAULT
+  [PASS] TC-21: Clear Accepted When T < 75°C -> Transitions to STATE_NORMAL
+
+--- Test Suite 6: Fault Priority & Hardware Flags ---
+  [PASS] TC-22: Fault Priority: SENSOR_ERR_DISCONNECTED takes precedence over Over-Temp
+  [PASS] TC-23: Fault Priority: SENSOR_ERR_COMM_TIMEOUT takes precedence over Over-Temp
+  [PASS] TC-24: Hardware SENSOR_ERR_OUT_OF_BOUNDS Low -> FAULT_SENSOR_UNDER_RANGE
+  [PASS] TC-25: Hardware SENSOR_ERR_OUT_OF_BOUNDS High -> FAULT_SENSOR_OVER_RANGE
+
+--- Test Suite 7: Continuous Dynamic State Transitions ---
+  [PASS] TC-26: Dynamic Seq 1: Initial (25°C) -> STATE_NORMAL
+  [PASS] TC-27: Dynamic Seq 2: Rise to Warning (65°C) -> STATE_WARNING
+  [PASS] TC-28: Dynamic Seq 3: Cooled (50°C) -> Recovers to STATE_NORMAL
+  [PASS] TC-29: Dynamic Seq 4: Thermal Spike (85°C) -> STATE_FAULT
+  [PASS] TC-30: Dynamic Seq 5: Partial Cool (76°C) -> Latched in STATE_FAULT
+  [PASS] TC-31: Dynamic Seq 6: Safe Cool (45°C) -> Auto-recovers to STATE_NORMAL
+
+=================================================================
+  Test Summary: 31 / 31 Passed (100% Pass Rate)
+=================================================================
+```
+
 ---
 
 ## 6. Real Example Executions & Outputs
@@ -95,6 +151,10 @@ All outputs below are captured directly from actual terminal execution on the co
 # STATE: NORMAL | TEMP: 25.00 C | FAULT: NONE
 # Exit code: 0
 
+.\build\sensor_controller.exe 59.0
+# STATE: NORMAL | TEMP: 59.00 C | FAULT: NONE
+# Exit code: 0
+
 .\build\sensor_controller.exe 59.99
 # STATE: NORMAL | TEMP: 59.99 C | FAULT: NONE
 # Exit code: 0
@@ -104,6 +164,10 @@ All outputs below are captured directly from actual terminal execution on the co
 ```powershell
 .\build\sensor_controller.exe 60.0
 # STATE: WARNING | TEMP: 60.00 C | FAULT: NONE
+# Exit code: 0
+
+.\build\sensor_controller.exe 79.0
+# STATE: WARNING | TEMP: 79.00 C | FAULT: NONE
 # Exit code: 0
 
 .\build\sensor_controller.exe 79.99
